@@ -1,0 +1,16 @@
+{% load static %}
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}DropNest — Smart Shopping{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'store/style.css' %}">
+</head><body>
+<div class="announcement">Free shipping on orders over ₹999 · Easy order tracking</div>
+<header class="header"><a class="brand" href="{% url 'home' %}"><span class="brand-mark">D</span> DropNest</a>
+<form class="search" action="{% url 'product_list' %}"><input name="q" placeholder="Search products..." value="{{ request.GET.q|default:'' }}"><button>Search</button></form>
+<nav><a href="{% url 'product_list' %}">Shop</a><a href="{% url 'cart' %}">Cart <b>{{ cart_count|default:0 }}</b></a>
+{% if user.is_authenticated %}<a href="{% url 'my_orders' %}">My orders</a><form class="inline" method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="link-button">Log out</button></form>
+{% else %}<a href="{% url 'login' %}">Log in</a><a class="nav-cta" href="{% url 'signup' %}">Create account</a>{% endif %}</nav></header>
+{% if messages %}<div class="messages">{% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}</div>{% endif %}
+<main>{% block content %}{% endblock %}</main>
+<footer><div><a class="brand" href="{% url 'home' %}"><span class="brand-mark">D</span> DropNest</a><p>Discover useful products for everyday life.</p></div><div><b>Customer care</b><p>Shipping · Returns · Contact</p></div><div><b>Secure shopping</b><p>Checkout securely. Payment gateway setup required for online payments.</p></div><div class="copyright">© {% now "Y" %} DropNest. Demo store template.</div></footer>
+</body></html>

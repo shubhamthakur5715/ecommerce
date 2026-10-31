@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% block title %}Pay for {{ order.order_number }} | DropNest{% endblock %}
+{% block content %}
+<div class="auth-wrap"><div class="form-panel auth-panel"><span class="eyebrow">SECURE CHECKOUT</span><h1>Complete payment.</h1><p>Order <b>{{ order.order_number }}</b></p><div class="summary-total"><span>Amount payable</span><b>₹{{ order.total }}</b></div><p class="muted">Use Razorpay test mode until your account and payment verification flow have been tested.</p><button class="button full" id="pay-button">Pay ₹{{ order.total }} securely</button><p id="payment-message" role="status"></p></div></div>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+const payButton = document.getElementById("pay-button");
+const message = document.getElementById("payment-message");
+payButton.addEventListener("click", async () => {
+  payButton.disabled = true;
+  message.textContent = "Preparing secure checkout…";
+  try {
+    const response = await fetch("{% url 'create_razorpay_order' order.order_number %}", {
+      method: "POST",
+      headers: {"X-CSRFToken": "{{ csrf_token }}", "Content-Type": "application/json"},
+      body: JSON.stringify({})
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not start payment.");
+    const checkout = new Razorpay({
+      key: data.key, amount: data.amount, currency: data.currency,
+      name: data.name, description: data.description, order_id: data.id,
+      prefill: data.prefill,
+      handler: async function (result) {
+        message.textContent = "Verifying payment…";
+        const verifyResponse = await fetch("{% url 'verify_razorpay_payment' order.order_number %}", {
+          method: "POST",
+          headers: {"X-CSRFToken": "{{ csrf_token }}", "Content-Type": "application/json"},
+          body: JSON.stringify(result)
+        });
+        const verified = await verifyResponse.json();
+        if (verifyResponse.ok && verified.ok) window.location.href = verified.redirect_url;
+        else { message.textContent = verified.error || "Verification failed. Contact support."; payButton.disabled = false; }
+      },
+      modal: {ondismiss: function(){ payButton.disabled = false; message.textContent = "Payment window closed. You can try again."; }}
+    });
+    checkout.on("payment.failed", function(){ payButton.disabled = false; message.textContent = "Payment failed. Please try again."; });
+    checkout.open();
+  } catch (error) {
+    message.textContent = error.message;
+    payButton.disabled = false;
+  }
+});
+</script>
+{% endblock %}

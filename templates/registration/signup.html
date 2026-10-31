@@ -1,0 +1,1 @@
+{% extends "base.html" %}{% block content %}<div class="auth-wrap"><form method="post" class="form-panel auth-panel">{% csrf_token %}<span class="eyebrow">JOIN THE COMMUNITY</span><h1>Create account.</h1>{{ form.as_p }}<button class="button full">Create account</button><p>Already registered? <a href="{% url 'login' %}">Log in</a></p></form></div>{% endblock %}
